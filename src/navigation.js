@@ -1,3 +1,6 @@
+let page = 1;
+let infiniteScroll;
+
 searchFormBtn.addEventListener("click", () => {
   location.hash = "#search=" + searchFormInput.value;
 });
@@ -13,6 +16,7 @@ arrowBtn.addEventListener("click", () => {
 
 window.addEventListener("DOMContentLoaded", navigator, false);
 window.addEventListener("hashchange", navigator, false);
+window.addEventListener("scroll", infiniteScroll);
 
 function navigator() {
   console.log({ location });
@@ -139,4 +143,6 @@ function trendsPage() {
   headerCategoryTitle.innerHTML = "Tendencias";
 
   getTrendingMovies();
+
+  infiniteScroll = getPaginatedTrendingMovies;
 }
