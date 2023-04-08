@@ -8,6 +8,8 @@ const api = axios.create({
   },
 });
 
+// Utils
+
 const lazyLoader = new IntersectionObserver((entries) => {
   entries.forEach((entry) => {
     if (entry.isIntersecting) {
@@ -17,10 +19,14 @@ const lazyLoader = new IntersectionObserver((entries) => {
   });
 });
 
-// Utils
-
-function createMovies(movies, container, lazyLoad = false) {
-  container.innerHTML = "";
+function createMovies(
+  movies,
+  container,
+  { lazyLoad = false, clean = true } = {}
+) {
+  if (clean) {
+    container.innerHTML = "";
+  }
 
   movies.forEach((movie) => {
     const movieContainer = document.createElement("div");
@@ -36,6 +42,12 @@ function createMovies(movies, container, lazyLoad = false) {
       lazyLoad ? "data-img" : "src",
       "https://image.tmdb.org/t/p/w300" + movie.poster_path
     );
+    movieImg.addEventListener("error", () => {
+      movieImg.setAttribute(
+        "src",
+        "https://you.com/proxy?url=https%3A%2F%2Ftse4.mm.bing.net%2Fth%3Fid%3DOIP.9H-R6CrKNKHTyePOByoM9QHaMp%26h%3D690%26c%3D7%26pid%3DApi%26p%3D0"
+      );
+    });
 
     if (lazyLoad) {
       lazyLoader.observe(movieImg);
@@ -74,14 +86,17 @@ async function getTrendingMoviesPreview() {
   const movies = data.results;
   console.log(movies);
 
-  createMovies(movies, trendingMoviesPreviewList, true);
+  createMovies(movies, trendingMoviesPreviewList, {
+    lazyLoad: true,
+    clean: false,
+  });
 }
 
 async function getCategegoriesPreview() {
   const { data } = await api("genre/movie/list");
   const categories = data.genres;
 
-  createCategories(categories, categoriesPreviewList);
+  createCategories(categories, categoriesPreviewList, true);
 }
 
 async function getMoviesByCategory(id) {
@@ -110,7 +125,37 @@ async function getTrendingMovies() {
   const { data } = await api("trending/movie/day");
   const movies = data.results;
 
-  createMovies(movies, genericSection);
+  createMovies(movies, genericSection, {
+    lazyLoad: true,
+    clean: true,
+  });
+
+  const btnLoadMore = document.createElement("button");
+  btnLoadMore.innerText = "Cargar más";
+  btnLoadMore.addEventListener("click", getPaginatedTrendingMovies);
+  genericSection.appendChild(btnLoadMore);
+}
+
+let page = 1;
+
+async function getPaginatedTrendingMovies(id) {
+  page++;
+  const { data } = await api(`trending/movie/day`, {
+    params: {
+      page,
+    },
+  });
+  const movies = data.results;
+
+  createMovies(movies, genericSection, {
+    lazyLoad: true,
+    clean: false,
+  });
+
+  const btnLoadMore = document.createElement("button");
+  btnLoadMore.innerText = "Cargar más";
+  btnLoadMore.addEventListener("click", getPaginatedTrendingMovies);
+  genericSection.appendChild(btnLoadMore);
 }
 
 async function getMovieById(id) {
